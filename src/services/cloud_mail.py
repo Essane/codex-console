@@ -238,7 +238,7 @@ class CloudMailService(BaseEmailService):
         Returns:
             验证码字符串，超时返回 None
         """
-        logger.info(f"正在从 CloudMail 邮箱 {email} 获取验证码...")
+        logger.info(f"正在从 CloudMail 邮箱 {email} 获取验证码, otp_sent_at={otp_sent_at}...")
 
         start_time = time.time()
         seen_email_ids: set = set()
@@ -265,6 +265,15 @@ class CloudMailService(BaseEmailService):
                         continue
 
                     seen_email_ids.add(mail_id)
+
+                    # 用 createTime 过滤旧邮件
+                    if otp_sent_at:
+                        create_time_str = mail.get("createTime", "")
+                        if create_time_str:
+                            mail_ts = self._parse_create_time(create_time_str)
+                            if mail_ts and mail_ts + 5 < otp_sent_at:
+                                logger.debug(f"跳过旧邮件 {mail_id}: createTime={create_time_str}, mail_ts={mail_ts}, otp_sent_at={otp_sent_at}")
+                                continue
 
                     sender = str(mail.get("sendEmail", "")).lower()
                     subject = str(mail.get("subject", ""))
@@ -297,6 +306,18 @@ class CloudMailService(BaseEmailService):
             time.sleep(3)
 
         logger.warning(f"等待验证码超时: {email}")
+        return None
+
+    @staticmethod
+    def _parse_create_time(time_str: str) -> Optional[float]:
+        """将 CloudMail 的 createTime (UTC) 解析为 Unix 时间戳"""
+        from datetime import datetime, timezone
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+            try:
+                dt = datetime.strptime(time_str, fmt).replace(tzinfo=timezone.utc)
+                return dt.timestamp()
+            except ValueError:
+                continue
         return None
 
     def list_emails(self, **kwargs) -> List[Dict[str, Any]]:
