@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 # 获取项目根目录
 # PyInstaller 打包后静态资源在 sys._MEIPASS，开发时在源码根目录
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     _RESOURCE_ROOT = Path(sys._MEIPASS)
 else:
     _RESOURCE_ROOT = Path(__file__).parent.parent.parent
@@ -108,23 +108,29 @@ def create_app() -> FastAPI:
     async def login_page(request: Request, next: Optional[str] = "/"):
         """登录页面"""
         return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "", "next": next or "/"}
+            request=request,
+            name="login.html",
+            context={"request": request, "error": "", "next": next or "/"},
         )
 
     @app.post("/login")
-    async def login_submit(request: Request, password: str = Form(...), next: Optional[str] = "/"):
+    async def login_submit(
+        request: Request, password: str = Form(...), next: Optional[str] = "/"
+    ):
         """处理登录提交"""
         expected = get_settings().webui_access_password.get_secret_value()
         if not secrets.compare_digest(password, expected):
             return templates.TemplateResponse(
-                "login.html",
-                {"request": request, "error": "密码错误", "next": next or "/"},
-                status_code=401
+                request=request,
+                name="login.html",
+                context={"request": request, "error": "密码错误", "next": next or "/"},
+                status_code=401,
             )
 
         response = RedirectResponse(url=next or "/", status_code=302)
-        response.set_cookie("webui_auth", _auth_token(expected), httponly=True, samesite="lax")
+        response.set_cookie(
+            "webui_auth", _auth_token(expected), httponly=True, samesite="lax"
+        )
         return response
 
     @app.get("/logout")
@@ -139,33 +145,43 @@ def create_app() -> FastAPI:
         """首页 - 注册页面"""
         if not _is_authenticated(request):
             return _redirect_to_login(request)
-        return templates.TemplateResponse("index.html", {"request": request})
+        return templates.TemplateResponse(
+            request=request, name="index.html", context={"request": request}
+        )
 
     @app.get("/accounts", response_class=HTMLResponse)
     async def accounts_page(request: Request):
         """账号管理页面"""
         if not _is_authenticated(request):
             return _redirect_to_login(request)
-        return templates.TemplateResponse("accounts.html", {"request": request})
+        return templates.TemplateResponse(
+            request=request, name="accounts.html", context={"request": request}
+        )
 
     @app.get("/email-services", response_class=HTMLResponse)
     async def email_services_page(request: Request):
         """邮箱服务管理页面"""
         if not _is_authenticated(request):
             return _redirect_to_login(request)
-        return templates.TemplateResponse("email_services.html", {"request": request})
+        return templates.TemplateResponse(
+            request=request, name="email_services.html", context={"request": request}
+        )
 
     @app.get("/settings", response_class=HTMLResponse)
     async def settings_page(request: Request):
         """设置页面"""
         if not _is_authenticated(request):
             return _redirect_to_login(request)
-        return templates.TemplateResponse("settings.html", {"request": request})
+        return templates.TemplateResponse(
+            request=request, name="settings.html", context={"request": request}
+        )
 
     @app.get("/payment", response_class=HTMLResponse)
     async def payment_page(request: Request):
         """支付页面"""
-        return templates.TemplateResponse("payment.html", {"request": request})
+        return templates.TemplateResponse(
+            request=request, name="payment.html", context={"request": request}
+        )
 
     @app.on_event("startup")
     async def startup_event():
@@ -184,7 +200,9 @@ def create_app() -> FastAPI:
         task_manager.set_loop(loop)
 
         logger.info("=" * 50)
-        logger.info(f"{settings.app_name} v{settings.app_version} 启动中，程序正在伸懒腰...")
+        logger.info(
+            f"{settings.app_name} v{settings.app_version} 启动中，程序正在伸懒腰..."
+        )
         logger.info(f"调试模式: {settings.debug}")
         logger.info(f"数据库连接已接好线: {settings.database_url}")
         logger.info("=" * 50)
