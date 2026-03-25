@@ -19,8 +19,10 @@ router = APIRouter()
 
 # ============== Pydantic Models ==============
 
+
 class EmailServiceCreate(BaseModel):
     """创建邮箱服务请求"""
+
     service_type: str
     name: str
     config: Dict[str, Any]
@@ -30,6 +32,7 @@ class EmailServiceCreate(BaseModel):
 
 class EmailServiceUpdate(BaseModel):
     """更新邮箱服务请求"""
+
     name: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     enabled: Optional[bool] = None
@@ -38,6 +41,7 @@ class EmailServiceUpdate(BaseModel):
 
 class EmailServiceResponse(BaseModel):
     """邮箱服务响应"""
+
     id: int
     service_type: str
     name: str
@@ -54,12 +58,14 @@ class EmailServiceResponse(BaseModel):
 
 class EmailServiceListResponse(BaseModel):
     """邮箱服务列表响应"""
+
     total: int
     services: List[EmailServiceResponse]
 
 
 class ServiceTestResult(BaseModel):
     """服务测试结果"""
+
     success: bool
     message: str
     details: Optional[Dict[str, Any]] = None
@@ -67,6 +73,7 @@ class ServiceTestResult(BaseModel):
 
 class OutlookBatchImportRequest(BaseModel):
     """Outlook 批量导入请求"""
+
     data: str  # 多行数据，每行格式: 邮箱----密码 或 邮箱----密码----client_id----refresh_token
     enabled: bool = True
     priority: int = 0
@@ -74,6 +81,7 @@ class OutlookBatchImportRequest(BaseModel):
 
 class OutlookBatchImportResponse(BaseModel):
     """Outlook 批量导入响应"""
+
     total: int
     success: int
     failed: int
@@ -84,7 +92,16 @@ class OutlookBatchImportResponse(BaseModel):
 # ============== Helper Functions ==============
 
 # 敏感字段列表，返回响应时需要过滤
-SENSITIVE_FIELDS = {'password', 'api_key', 'refresh_token', 'access_token', 'admin_token', 'admin_password'}
+SENSITIVE_FIELDS = {
+    "password",
+    "api_key",
+    "refresh_token",
+    "access_token",
+    "admin_token",
+    "admin_password",
+    "custom_auth",
+}
+
 
 def filter_sensitive_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """过滤敏感配置信息"""
@@ -100,8 +117,8 @@ def filter_sensitive_config(config: Dict[str, Any]) -> Dict[str, Any]:
             filtered[key] = value
 
     # 为 Outlook 计算是否有 OAuth
-    if config.get('client_id') and config.get('refresh_token'):
-        filtered['has_oauth'] = True
+    if config.get("client_id") and config.get("refresh_token"):
+        filtered["has_oauth"] = True
 
     return filtered
 
@@ -123,6 +140,7 @@ def service_to_response(service: EmailServiceModel) -> EmailServiceResponse:
 
 # ============== API Endpoints ==============
 
+
 @router.get("/stats")
 async def get_email_services_stats():
     """获取邮箱服务统计信息"""
@@ -130,43 +148,46 @@ async def get_email_services_stats():
         from sqlalchemy import func
 
         # 按类型统计
-        type_stats = db.query(
-            EmailServiceModel.service_type,
-            func.count(EmailServiceModel.id)
-        ).group_by(EmailServiceModel.service_type).all()
+        type_stats = (
+            db.query(EmailServiceModel.service_type, func.count(EmailServiceModel.id))
+            .group_by(EmailServiceModel.service_type)
+            .all()
+        )
 
         # 启用数量
-        enabled_count = db.query(func.count(EmailServiceModel.id)).filter(
-            EmailServiceModel.enabled == True
-        ).scalar()
+        enabled_count = (
+            db.query(func.count(EmailServiceModel.id))
+            .filter(EmailServiceModel.enabled == True)
+            .scalar()
+        )
 
         stats = {
-            'outlook_count': 0,
-            'custom_count': 0,
-            'temp_mail_count': 0,
-            'duck_mail_count': 0,
-            'freemail_count': 0,
-            'imap_mail_count': 0,
-            'cloud_mail_count': 0,
-            'tempmail_available': True,  # 临时邮箱始终可用
-            'enabled_count': enabled_count
+            "outlook_count": 0,
+            "custom_count": 0,
+            "temp_mail_count": 0,
+            "duck_mail_count": 0,
+            "freemail_count": 0,
+            "imap_mail_count": 0,
+            "cloud_mail_count": 0,
+            "tempmail_available": True,  # 临时邮箱始终可用
+            "enabled_count": enabled_count,
         }
 
         for service_type, count in type_stats:
-            if service_type == 'outlook':
-                stats['outlook_count'] = count
-            elif service_type == 'moe_mail':
-                stats['custom_count'] = count
-            elif service_type == 'temp_mail':
-                stats['temp_mail_count'] = count
-            elif service_type == 'duck_mail':
-                stats['duck_mail_count'] = count
-            elif service_type == 'freemail':
-                stats['freemail_count'] = count
-            elif service_type == 'imap_mail':
-                stats['imap_mail_count'] = count
-            elif service_type == 'cloud_mail':
-                stats['cloud_mail_count'] = count
+            if service_type == "outlook":
+                stats["outlook_count"] = count
+            elif service_type == "moe_mail":
+                stats["custom_count"] = count
+            elif service_type == "temp_mail":
+                stats["temp_mail_count"] = count
+            elif service_type == "duck_mail":
+                stats["duck_mail_count"] = count
+            elif service_type == "freemail":
+                stats["freemail_count"] = count
+            elif service_type == "imap_mail":
+                stats["imap_mail_count"] = count
+            elif service_type == "cloud_mail":
+                stats["cloud_mail_count"] = count
 
         return stats
 
@@ -181,9 +202,19 @@ async def get_service_types():
                 "label": "Tempmail.lol",
                 "description": "临时邮箱服务，无需配置",
                 "config_fields": [
-                    {"name": "base_url", "label": "API 地址", "default": "https://api.tempmail.lol/v2", "required": False},
-                    {"name": "timeout", "label": "超时时间", "default": 30, "required": False},
-                ]
+                    {
+                        "name": "base_url",
+                        "label": "API 地址",
+                        "default": "https://api.tempmail.lol/v2",
+                        "required": False,
+                    },
+                    {
+                        "name": "timeout",
+                        "label": "超时时间",
+                        "default": 30,
+                        "required": False,
+                    },
+                ],
             },
             {
                 "value": "outlook",
@@ -192,9 +223,17 @@ async def get_service_types():
                 "config_fields": [
                     {"name": "email", "label": "邮箱地址", "required": True},
                     {"name": "password", "label": "密码", "required": True},
-                    {"name": "client_id", "label": "OAuth Client ID", "required": False},
-                    {"name": "refresh_token", "label": "OAuth Refresh Token", "required": False},
-                ]
+                    {
+                        "name": "client_id",
+                        "label": "OAuth Client ID",
+                        "required": False,
+                    },
+                    {
+                        "name": "refresh_token",
+                        "label": "OAuth Refresh Token",
+                        "required": False,
+                    },
+                ],
             },
             {
                 "value": "moe_mail",
@@ -204,63 +243,164 @@ async def get_service_types():
                     {"name": "base_url", "label": "API 地址", "required": True},
                     {"name": "api_key", "label": "API Key", "required": True},
                     {"name": "default_domain", "label": "默认域名", "required": False},
-                ]
+                ],
             },
             {
                 "value": "temp_mail",
                 "label": "Temp-Mail（自部署）",
                 "description": "自部署 Cloudflare Worker 临时邮箱，admin 模式管理",
                 "config_fields": [
-                    {"name": "base_url", "label": "Worker 地址", "required": True, "placeholder": "https://mail.example.com"},
-                    {"name": "admin_password", "label": "Admin 密码", "required": True, "secret": True},
-                    {"name": "domain", "label": "邮箱域名", "required": True, "placeholder": "example.com"},
-                    {"name": "enable_prefix", "label": "启用前缀", "required": False, "default": True},
-                ]
+                    {
+                        "name": "base_url",
+                        "label": "Worker 地址",
+                        "required": True,
+                        "placeholder": "https://mail.example.com",
+                    },
+                    {
+                        "name": "admin_password",
+                        "label": "Admin 密码",
+                        "required": True,
+                        "secret": True,
+                    },
+                    {
+                        "name": "custom_auth",
+                        "label": "Custom Auth（可选）",
+                        "required": False,
+                        "secret": True,
+                    },
+                    {
+                        "name": "domain",
+                        "label": "邮箱域名",
+                        "required": True,
+                        "placeholder": "example.com",
+                    },
+                    {
+                        "name": "enable_prefix",
+                        "label": "启用前缀",
+                        "required": False,
+                        "default": True,
+                    },
+                ],
             },
             {
                 "value": "duck_mail",
                 "label": "DuckMail",
                 "description": "DuckMail 接口邮箱服务，支持 API Key 私有域名访问",
                 "config_fields": [
-                    {"name": "base_url", "label": "API 地址", "required": True, "placeholder": "https://api.duckmail.sbs"},
-                    {"name": "default_domain", "label": "默认域名", "required": True, "placeholder": "duckmail.sbs"},
-                    {"name": "api_key", "label": "API Key", "required": False, "secret": True},
-                    {"name": "password_length", "label": "随机密码长度", "required": False, "default": 12},
-                ]
+                    {
+                        "name": "base_url",
+                        "label": "API 地址",
+                        "required": True,
+                        "placeholder": "https://api.duckmail.sbs",
+                    },
+                    {
+                        "name": "default_domain",
+                        "label": "默认域名",
+                        "required": True,
+                        "placeholder": "duckmail.sbs",
+                    },
+                    {
+                        "name": "api_key",
+                        "label": "API Key",
+                        "required": False,
+                        "secret": True,
+                    },
+                    {
+                        "name": "password_length",
+                        "label": "随机密码长度",
+                        "required": False,
+                        "default": 12,
+                    },
+                ],
             },
             {
                 "value": "freemail",
                 "label": "Freemail",
                 "description": "Freemail 自部署 Cloudflare Worker 临时邮箱服务",
                 "config_fields": [
-                    {"name": "base_url", "label": "API 地址", "required": True, "placeholder": "https://freemail.example.com"},
-                    {"name": "admin_token", "label": "Admin Token", "required": True, "secret": True},
-                    {"name": "domain", "label": "邮箱域名", "required": False, "placeholder": "example.com"},
-                ]
+                    {
+                        "name": "base_url",
+                        "label": "API 地址",
+                        "required": True,
+                        "placeholder": "https://freemail.example.com",
+                    },
+                    {
+                        "name": "admin_token",
+                        "label": "Admin Token",
+                        "required": True,
+                        "secret": True,
+                    },
+                    {
+                        "name": "domain",
+                        "label": "邮箱域名",
+                        "required": False,
+                        "placeholder": "example.com",
+                    },
+                ],
             },
             {
                 "value": "imap_mail",
                 "label": "IMAP 邮箱",
                 "description": "标准 IMAP 协议邮箱（Gmail/QQ/163等），仅用于接收验证码，强制直连",
                 "config_fields": [
-                    {"name": "host", "label": "IMAP 服务器", "required": True, "placeholder": "imap.gmail.com"},
-                    {"name": "port", "label": "端口", "required": False, "default": 993},
-                    {"name": "use_ssl", "label": "使用 SSL", "required": False, "default": True},
+                    {
+                        "name": "host",
+                        "label": "IMAP 服务器",
+                        "required": True,
+                        "placeholder": "imap.gmail.com",
+                    },
+                    {
+                        "name": "port",
+                        "label": "端口",
+                        "required": False,
+                        "default": 993,
+                    },
+                    {
+                        "name": "use_ssl",
+                        "label": "使用 SSL",
+                        "required": False,
+                        "default": True,
+                    },
                     {"name": "email", "label": "邮箱地址", "required": True},
-                    {"name": "password", "label": "密码/授权码", "required": True, "secret": True},
-                ]
+                    {
+                        "name": "password",
+                        "label": "密码/授权码",
+                        "required": True,
+                        "secret": True,
+                    },
+                ],
             },
             {
                 "value": "cloud_mail",
                 "label": "CloudMail",
                 "description": "CloudMail 自部署邮箱服务，通过管理员 API 创建邮箱并接收验证码",
                 "config_fields": [
-                    {"name": "base_url", "label": "API 地址", "required": True, "placeholder": "https://mail.example.com"},
-                    {"name": "admin_email", "label": "管理员邮箱", "required": True, "placeholder": "admin@example.com"},
-                    {"name": "admin_password", "label": "管理员密码", "required": True, "secret": True},
-                    {"name": "domain", "label": "邮箱域名", "required": True, "placeholder": "example.com"},
-                ]
-            }
+                    {
+                        "name": "base_url",
+                        "label": "API 地址",
+                        "required": True,
+                        "placeholder": "https://mail.example.com",
+                    },
+                    {
+                        "name": "admin_email",
+                        "label": "管理员邮箱",
+                        "required": True,
+                        "placeholder": "admin@example.com",
+                    },
+                    {
+                        "name": "admin_password",
+                        "label": "管理员密码",
+                        "required": True,
+                        "secret": True,
+                    },
+                    {
+                        "name": "domain",
+                        "label": "邮箱域名",
+                        "required": True,
+                        "placeholder": "example.com",
+                    },
+                ],
+            },
         ]
     }
 
@@ -280,11 +420,12 @@ async def list_email_services(
         if enabled_only:
             query = query.filter(EmailServiceModel.enabled == True)
 
-        services = query.order_by(EmailServiceModel.priority.asc(), EmailServiceModel.id.asc()).all()
+        services = query.order_by(
+            EmailServiceModel.priority.asc(), EmailServiceModel.id.asc()
+        ).all()
 
         return EmailServiceListResponse(
-            total=len(services),
-            services=[service_to_response(s) for s in services]
+            total=len(services), services=[service_to_response(s) for s in services]
         )
 
 
@@ -292,7 +433,11 @@ async def list_email_services(
 async def get_email_service(service_id: int):
     """获取单个邮箱服务详情"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
         return service_to_response(service)
@@ -302,7 +447,11 @@ async def get_email_service(service_id: int):
 async def get_email_service_full(service_id: int):
     """获取单个邮箱服务完整详情（包含敏感字段，用于编辑）"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
 
@@ -314,8 +463,12 @@ async def get_email_service_full(service_id: int):
             "priority": service.priority,
             "config": service.config or {},  # 返回完整配置
             "last_used": service.last_used.isoformat() if service.last_used else None,
-            "created_at": service.created_at.isoformat() if service.created_at else None,
-            "updated_at": service.updated_at.isoformat() if service.updated_at else None,
+            "created_at": (
+                service.created_at.isoformat() if service.created_at else None
+            ),
+            "updated_at": (
+                service.updated_at.isoformat() if service.updated_at else None
+            ),
         }
 
 
@@ -326,11 +479,17 @@ async def create_email_service(request: EmailServiceCreate):
     try:
         EmailServiceType(request.service_type)
     except ValueError:
-        raise HTTPException(status_code=400, detail=f"无效的服务类型: {request.service_type}")
+        raise HTTPException(
+            status_code=400, detail=f"无效的服务类型: {request.service_type}"
+        )
 
     with get_db() as db:
         # 检查名称是否重复
-        existing = db.query(EmailServiceModel).filter(EmailServiceModel.name == request.name).first()
+        existing = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.name == request.name)
+            .first()
+        )
         if existing:
             raise HTTPException(status_code=400, detail="服务名称已存在")
 
@@ -339,7 +498,7 @@ async def create_email_service(request: EmailServiceCreate):
             name=request.name,
             config=request.config,
             enabled=request.enabled,
-            priority=request.priority
+            priority=request.priority,
         )
         db.add(service)
         db.commit()
@@ -352,7 +511,11 @@ async def create_email_service(request: EmailServiceCreate):
 async def update_email_service(service_id: int, request: EmailServiceUpdate):
     """更新邮箱服务配置"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
 
@@ -384,7 +547,11 @@ async def update_email_service(service_id: int, request: EmailServiceUpdate):
 async def delete_email_service(service_id: int):
     """删除邮箱服务配置"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
 
@@ -398,13 +565,19 @@ async def delete_email_service(service_id: int):
 async def test_email_service(service_id: int):
     """测试邮箱服务是否可用"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
 
         try:
             service_type = EmailServiceType(service.service_type)
-            email_service = EmailServiceFactory.create(service_type, service.config, name=service.name)
+            email_service = EmailServiceFactory.create(
+                service_type, service.config, name=service.name
+            )
 
             health = email_service.check_health()
 
@@ -412,27 +585,29 @@ async def test_email_service(service_id: int):
                 return ServiceTestResult(
                     success=True,
                     message="服务连接正常",
-                    details=email_service.get_service_info() if hasattr(email_service, 'get_service_info') else None
+                    details=(
+                        email_service.get_service_info()
+                        if hasattr(email_service, "get_service_info")
+                        else None
+                    ),
                 )
             else:
-                return ServiceTestResult(
-                    success=False,
-                    message="服务连接失败"
-                )
+                return ServiceTestResult(success=False, message="服务连接失败")
 
         except Exception as e:
             logger.error(f"测试邮箱服务失败: {e}")
-            return ServiceTestResult(
-                success=False,
-                message=f"测试失败: {str(e)}"
-            )
+            return ServiceTestResult(success=False, message=f"测试失败: {str(e)}")
 
 
 @router.post("/{service_id}/enable")
 async def enable_email_service(service_id: int):
     """启用邮箱服务"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
 
@@ -446,7 +621,11 @@ async def enable_email_service(service_id: int):
 async def disable_email_service(service_id: int):
     """禁用邮箱服务"""
     with get_db() as db:
-        service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+        service = (
+            db.query(EmailServiceModel)
+            .filter(EmailServiceModel.id == service_id)
+            .first()
+        )
         if not service:
             raise HTTPException(status_code=404, detail="服务不存在")
 
@@ -461,7 +640,11 @@ async def reorder_services(service_ids: List[int]):
     """重新排序邮箱服务优先级"""
     with get_db() as db:
         for index, service_id in enumerate(service_ids):
-            service = db.query(EmailServiceModel).filter(EmailServiceModel.id == service_id).first()
+            service = (
+                db.query(EmailServiceModel)
+                .filter(EmailServiceModel.id == service_id)
+                .first()
+            )
             if service:
                 service.priority = index
 
@@ -514,10 +697,14 @@ async def batch_import_outlook(request: OutlookBatchImportRequest):
                 continue
 
             # 检查是否已存在
-            existing = db.query(EmailServiceModel).filter(
-                EmailServiceModel.service_type == "outlook",
-                EmailServiceModel.name == email
-            ).first()
+            existing = (
+                db.query(EmailServiceModel)
+                .filter(
+                    EmailServiceModel.service_type == "outlook",
+                    EmailServiceModel.name == email,
+                )
+                .first()
+            )
 
             if existing:
                 failed += 1
@@ -525,10 +712,7 @@ async def batch_import_outlook(request: OutlookBatchImportRequest):
                 continue
 
             # 构建配置
-            config = {
-                "email": email,
-                "password": password
-            }
+            config = {"email": email, "password": password}
 
             # 检查是否有 OAuth 信息（格式二）
             if len(parts) >= 4:
@@ -545,18 +729,20 @@ async def batch_import_outlook(request: OutlookBatchImportRequest):
                     name=email,
                     config=config,
                     enabled=request.enabled,
-                    priority=request.priority
+                    priority=request.priority,
                 )
                 db.add(service)
                 db.commit()
                 db.refresh(service)
 
-                accounts.append({
-                    "id": service.id,
-                    "email": email,
-                    "has_oauth": bool(config.get("client_id")),
-                    "name": email
-                })
+                accounts.append(
+                    {
+                        "id": service.id,
+                        "email": email,
+                        "has_oauth": bool(config.get("client_id")),
+                        "name": email,
+                    }
+                )
                 success += 1
 
             except Exception as e:
@@ -565,11 +751,7 @@ async def batch_import_outlook(request: OutlookBatchImportRequest):
                 db.rollback()
 
     return OutlookBatchImportResponse(
-        total=total,
-        success=success,
-        failed=failed,
-        accounts=accounts,
-        errors=errors
+        total=total, success=success, failed=failed, accounts=accounts, errors=errors
     )
 
 
@@ -579,10 +761,14 @@ async def batch_delete_outlook(service_ids: List[int]):
     deleted = 0
     with get_db() as db:
         for service_id in service_ids:
-            service = db.query(EmailServiceModel).filter(
-                EmailServiceModel.id == service_id,
-                EmailServiceModel.service_type == "outlook"
-            ).first()
+            service = (
+                db.query(EmailServiceModel)
+                .filter(
+                    EmailServiceModel.id == service_id,
+                    EmailServiceModel.service_type == "outlook",
+                )
+                .first()
+            )
             if service:
                 db.delete(service)
                 deleted += 1
@@ -593,8 +779,10 @@ async def batch_delete_outlook(service_ids: List[int]):
 
 # ============== 临时邮箱测试 ==============
 
+
 class TempmailTestRequest(BaseModel):
     """临时邮箱测试请求"""
+
     api_url: Optional[str] = None
 
 

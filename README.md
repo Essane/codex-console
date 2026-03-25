@@ -7,12 +7,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 
-## QQ群
-- 交流群:291638849
-- https://qm.qq.com/q/ZTCKxawxeo
+- GitHub Repo: [https://github.com/dou-jiang/codex-console](https://github.com/dou-jiang/codex-console)
 
-## Telegram交流频道
-- https://t.me/cysq2026
+## QQ群
+
+- 交流群: [291638849??????](https://qm.qq.com/q/4TETC3mWco)
+- Telegram ??: [codex_console](https://t.me/codex_console)
 
 ## 致谢
 
@@ -129,13 +129,21 @@ codex-console.exe --access-password mypassword
 docker-compose up -d
 ```
 
-你可以在 `docker-compose.yml` 中修改环境变量，比如端口和访问密码。
+你可以在 `docker-compose.yml` 中修改环境变量，比如端口和访问密码。  
+如果需要看“全自动绑卡”的可视化浏览器，打开：
+
+- noVNC: `http://127.0.0.1:6080`
 
 ### 使用 docker run
 
 ```bash
 docker run -d \
   -p 1455:1455 \
+  -p 6080:6080 \
+  -e DISPLAY=:99 \
+  -e ENABLE_VNC=1 \
+  -e VNC_PORT=5900 \
+  -e NOVNC_PORT=6080 \
   -e WEBUI_HOST=0.0.0.0 \
   -e WEBUI_PORT=1455 \
   -e WEBUI_ACCESS_PASSWORD=your_secure_password \
@@ -213,3 +221,10 @@ dist/codex-console-windows-X64.exe
 本项目仅供学习、研究和技术交流使用，请遵守相关平台和服务条款，不要用于违规、滥用或非法用途。
 
 因使用本项目产生的任何风险和后果，由使用者自行承担。
+
+## ????
+
+?????????????????????????????
+
+?? ???????????????????????????????????????????????????????????????????????????????????
+

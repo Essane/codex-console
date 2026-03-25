@@ -20,8 +20,17 @@ else:
 sys.path.insert(0, str(_src_root))
 
 from src.core.utils import setup_logging
+from src.core.timezone_utils import apply_process_timezone
+from src.core.db_logs import install_database_log_handler
 from src.database.init_db import initialize_database
 from src.config.settings import get_settings
+from src.config.project_notice import build_terminal_notice_lines
+
+
+def _print_project_notice():
+    """Print the project notice to the terminal on startup."""
+    for line in build_terminal_notice_lines():
+        print(line)
 
 
 def _load_dotenv():
@@ -43,6 +52,9 @@ def _load_dotenv():
 
 def setup_application():
     """设置应用程序"""
+    # 统一进程时区为北京时间，避免容器默认 UTC 导致时间错位
+    apply_process_timezone()
+
     # 加载 .env 文件（优先级低于已有环境变量）
     _load_dotenv()
 
@@ -72,6 +84,7 @@ def setup_application():
         log_level=settings.log_level,
         log_file=log_file
     )
+    install_database_log_handler()
 
     logger = logging.getLogger(__name__)
     logger.info("数据库初始化完成，地基已经打好")
@@ -83,6 +96,7 @@ def setup_application():
 
 
 def start_webui():
+    _print_project_notice()
     """启动 Web UI"""
     # 设置应用程序
     settings = setup_application()
