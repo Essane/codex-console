@@ -12,8 +12,10 @@ from typing import Dict, List, Tuple
 # 枚举类型
 # ============================================================================
 
+
 class AccountStatus(str, Enum):
     """账户状态"""
+
     ACTIVE = "active"
     EXPIRED = "expired"
     BANNED = "banned"
@@ -22,6 +24,7 @@ class AccountStatus(str, Enum):
 
 class TaskStatus(str, Enum):
     """任务状态"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -31,6 +34,7 @@ class TaskStatus(str, Enum):
 
 class EmailServiceType(str, Enum):
     """邮箱服务类型"""
+
     TEMPMAIL = "tempmail"
     OUTLOOK = "outlook"
     MOE_MAIL = "moe_mail"
@@ -38,7 +42,7 @@ class EmailServiceType(str, Enum):
     DUCK_MAIL = "duck_mail"
     FREEMAIL = "freemail"
     IMAP_MAIL = "imap_mail"
-    CLOUD_MAIL = "cloud_mail"
+    CLOUDMAIL = "cloudmail"
 
 
 # ============================================================================
@@ -46,7 +50,7 @@ class EmailServiceType(str, Enum):
 # ============================================================================
 
 APP_NAME = "OpenAI/Codex CLI 自动注册系统"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 APP_DESCRIPTION = "自动注册 OpenAI/Codex CLI 账号的系统"
 
 # ============================================================================
@@ -142,14 +146,6 @@ EMAIL_SERVICE_DEFAULTS = {
         "timeout": 30,
         "max_retries": 3,
     },
-    "cloud_mail": {
-        "base_url": "",
-        "admin_email": "",
-        "admin_password": "",
-        "domain": "",
-        "timeout": 30,
-        "max_retries": 3,
-    }
 }
 
 # ============================================================================
@@ -164,14 +160,14 @@ OTP_MAX_ATTEMPTS = 40  # 最大轮询次数
 # 简单匹配：任意 6 位数字
 OTP_CODE_SIMPLE_PATTERN = r"(?<!\d)(\d{6})(?!\d)"
 # 语义匹配：带上下文的验证码（如 "code is 123456", "验证码 123456"）
-OTP_CODE_SEMANTIC_PATTERN = r'(?:code\s+is|验证码[是为]?\s*[:：]?\s*)(\d{6})'
+OTP_CODE_SEMANTIC_PATTERN = r"(?:code\s+is|验证码[是为]?\s*[:：]?\s*)(\d{6})"
 
 # OpenAI 验证邮件发件人
 OPENAI_EMAIL_SENDERS = [
     "noreply@openai.com",
     "no-reply@openai.com",
-    "@openai.com",     # 精确域名匹配
-    ".openai.com",     # 子域名匹配（如 otp@tm1.openai.com）
+    "@openai.com",  # 精确域名匹配
+    ".openai.com",  # 子域名匹配（如 otp@tm1.openai.com）
 ]
 
 # OpenAI 验证邮件关键词
@@ -192,12 +188,58 @@ DEFAULT_PASSWORD_LENGTH = 12
 
 # 常用英文名
 FIRST_NAMES = [
-    "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Thomas", "Charles",
-    "Emma", "Olivia", "Ava", "Isabella", "Sophia", "Mia", "Charlotte", "Amelia", "Harper", "Evelyn",
-    "Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Jamie", "Avery", "Quinn", "Skyler",
-    "Liam", "Noah", "Ethan", "Lucas", "Mason", "Oliver", "Elijah", "Aiden", "Henry", "Sebastian",
-    "Grace", "Lily", "Chloe", "Zoey", "Nora", "Aria", "Hazel", "Aurora", "Stella", "Ivy"
+    "James",
+    "John",
+    "Robert",
+    "Michael",
+    "William",
+    "David",
+    "Richard",
+    "Joseph",
+    "Thomas",
+    "Charles",
+    "Emma",
+    "Olivia",
+    "Ava",
+    "Isabella",
+    "Sophia",
+    "Mia",
+    "Charlotte",
+    "Amelia",
+    "Harper",
+    "Evelyn",
+    "Alex",
+    "Jordan",
+    "Taylor",
+    "Morgan",
+    "Casey",
+    "Riley",
+    "Jamie",
+    "Avery",
+    "Quinn",
+    "Skyler",
+    "Liam",
+    "Noah",
+    "Ethan",
+    "Lucas",
+    "Mason",
+    "Oliver",
+    "Elijah",
+    "Aiden",
+    "Henry",
+    "Sebastian",
+    "Grace",
+    "Lily",
+    "Chloe",
+    "Zoey",
+    "Nora",
+    "Aria",
+    "Hazel",
+    "Aurora",
+    "Stella",
+    "Ivy",
 ]
+
 
 def generate_random_user_info() -> dict:
     """
@@ -224,10 +266,8 @@ def generate_random_user_info() -> dict:
 
     birthdate = f"{birth_year}-{birth_month:02d}-{birth_day:02d}"
 
-    return {
-        "name": name,
-        "birthdate": birthdate
-    }
+    return {"name": name, "birthdate": birthdate}
+
 
 # 保留默认值供兼容
 DEFAULT_USER_INFO = {
@@ -323,27 +363,22 @@ ERROR_MESSAGES = {
     "NETWORK_ERROR": "网络连接失败",
     "TIMEOUT": "操作超时",
     "VALIDATION_ERROR": "参数验证失败",
-
     # 邮箱服务错误
     "EMAIL_SERVICE_UNAVAILABLE": "邮箱服务不可用",
     "EMAIL_CREATION_FAILED": "创建邮箱失败",
     "OTP_NOT_RECEIVED": "未收到验证码",
     "OTP_INVALID": "验证码无效",
-
     # OpenAI 相关错误
     "OPENAI_AUTH_FAILED": "OpenAI 认证失败",
     "OPENAI_RATE_LIMIT": "OpenAI 接口限流",
     "OPENAI_CAPTCHA": "遇到验证码",
-
     # 代理错误
     "PROXY_FAILED": "代理连接失败",
     "PROXY_AUTH_FAILED": "代理认证失败",
-
     # 账户错误
     "ACCOUNT_NOT_FOUND": "账户不存在",
     "ACCOUNT_ALREADY_EXISTS": "账户已存在",
     "ACCOUNT_INVALID": "账户无效",
-
     # 任务错误
     "TASK_NOT_FOUND": "任务不存在",
     "TASK_ALREADY_RUNNING": "任务已在运行中",
@@ -391,7 +426,7 @@ MICROSOFT_TOKEN_ENDPOINTS = {
 # IMAP 服务器配置
 OUTLOOK_IMAP_SERVERS = {
     "OLD": "outlook.office365.com",  # 旧版 IMAP
-    "NEW": "outlook.live.com",       # 新版 IMAP
+    "NEW": "outlook.live.com",  # 新版 IMAP
 }
 
 # Microsoft OAuth2 Scopes
