@@ -341,7 +341,7 @@ async function loadCustomServices() {
             api.get('/email-services?service_type=duck_mail'),
             api.get('/email-services?service_type=freemail'),
             api.get('/email-services?service_type=imap_mail'),
-            api.get('/email-services?service_type=cloud_mail')
+            api.get('/email-services?service_type=cloudmail')
         ]);
         customServices = [
             ...(r1.services || []).map(s => ({ ...s, _subType: 'moemail' })),
@@ -495,7 +495,7 @@ async function handleAddCustom(e) {
             domain: formData.get('fm_domain')
         };
     } else if (subType === 'cloudmail') {
-        serviceType = 'cloud_mail';
+        serviceType = 'cloudmail';
         config = {
             base_url: formData.get('cm_base_url'),
             admin_email: formData.get('cm_admin_email'),

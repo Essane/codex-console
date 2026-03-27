@@ -201,6 +201,8 @@ async def get_email_services_stats():
                 stats["outlook_count"] = count
             elif service_type == "moe_mail":
                 stats["custom_count"] = count
+            elif service_type == "cloudmail":
+                stats["custom_count"] = count
             elif service_type == "temp_mail":
                 stats["temp_mail_count"] = count
             elif service_type == "duck_mail":
